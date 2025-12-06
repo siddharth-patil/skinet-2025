@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Core.Entities.OrderAggregate
 {
-    public class Order : BaseEntity
+    public class Order : BaseEntity, IDtoConvertible
     {
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public DeliveryMethod DeliveryMethod { get; set; } = null!;

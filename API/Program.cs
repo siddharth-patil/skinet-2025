@@ -4,6 +4,7 @@ using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
@@ -37,7 +38,9 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(config =>
 
 builder.Services.AddSingleton<ICartService,CartService>();
 builder.Services.AddAuthorization();
-builder.Services.AddIdentityApiEndpoints<AppUser>().AddEntityFrameworkStores<StoreContext>();
+builder.Services.AddIdentityApiEndpoints<AppUser>()
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<StoreContext>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddSignalR();
 
@@ -68,8 +71,9 @@ try
     using var scope = app.Services.CreateScope(); // Create a scope to get scoped services like DbContext
     var services = scope.ServiceProvider; // Get the service provider
     var context = services.GetRequiredService<StoreContext>(); // Get your DbContext
+    var userManager = services.GetRequiredService<UserManager<AppUser>>(); // 
     await context.Database.MigrateAsync(); // Apply any pending migrations
-    await StoreContextSeed.SeedAsync(context); // Seed the database
+    await StoreContextSeed.SeedAsync(context, userManager); // Seed the database
 }
 catch (Exception ex)
 {

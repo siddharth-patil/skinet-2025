@@ -12,6 +12,7 @@ namespace Core.Entities.OrderAggregate
         PaymentReceived,
         PaymentFailed,
         PaymentMismatch,
+        Refunded,
         Shipped,
         Delivered,
         Canceled

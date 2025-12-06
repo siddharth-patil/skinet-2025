@@ -4,7 +4,6 @@ using Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace API.Controllers
@@ -59,7 +58,8 @@ namespace API.Controllers
                 user.FirstName,
                 user.LastName,
                 user.Email,
-                Address = user.Address?.ToDto()
+                Address = user.Address?.ToDto(),
+                Roles = User.FindFirstValue(ClaimTypes.Role)
             });
         }
 

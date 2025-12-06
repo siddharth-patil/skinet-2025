@@ -13,13 +13,34 @@ namespace Infrastructure.Services
     //public class PaymentService(IConfiguration config, ICartService cartService, 
     //    IGenericRepository<Core.Entities.Product> productRepo,
     //    IGenericRepository<DeliveryMethod> dmRepo) : IPaymentService
-    public class PaymentService(IConfiguration config, ICartService cartService,
-        IUnitOfWork unit) : IPaymentService
+    public class PaymentService : IPaymentService
     {
+        private readonly ICartService cartService;
+        private readonly IUnitOfWork unit;
+
+        public PaymentService(IConfiguration config, ICartService cartService,
+        IUnitOfWork unit)
+        {
+            this.cartService = cartService;
+            this.unit = unit;
+            StripeConfiguration.ApiKey = config["StripeSettings:SecretKey"];
+        }
+
+        public async Task<string> RefundPayment(string paymentIntentId)
+        {
+            var refundOptions = new RefundCreateOptions
+            {
+                PaymentIntent = paymentIntentId
+            };
+
+            var refundService = new RefundService();
+            var result = await refundService.CreateAsync(refundOptions);
+
+            return result.Status;
+        }
+
         public async Task<ShoppingCart?> CreateOrUpdatePaymentIntent(string cartId)
         {
-            StripeConfiguration.ApiKey = config["StripeSettings:SecretKey"];
-
             var cart = await cartService.GetCartAsync(cartId);
 
             if (cart == null) return null;
@@ -68,101 +89,6 @@ namespace Infrastructure.Services
                 };
                 intent = await service.UpdateAsync(cart.PaymentIntentId, options);
             }
-
-            //// compute amount in cents safely
-            //long ComputeAmountInCents()
-            //{
-            //    decimal itemsTotal = cart.Items.Sum(x => x.Quantity * x.Price);
-            //    decimal totalCents = Math.Round(itemsTotal * 100M) + Math.Round(shippingPrice * 100M);
-            //    return (long)totalCents;
-            //}
-
-            //var amount = ComputeAmountInCents();
-
-            //var updatableStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            //{
-            //    "requires_payment_method",
-            //    "requires_confirmation",
-            //    "requires_action"
-            //};
-
-            //// If there's no stored PaymentIntent, create a new one
-            //if (string.IsNullOrEmpty(cart.PaymentIntentId))
-            //{
-            //    var options = new PaymentIntentCreateOptions
-            //    {
-            //        Amount = amount,
-            //        Currency = "usd",
-            //        PaymentMethodTypes = new List<string> { "card" }
-            //    };
-            //    intent = await service.CreateAsync(options);
-            //    cart.PaymentIntentId = intent.Id;
-            //    cart.ClientSecret = intent.ClientSecret;
-            //}
-            //else
-            //{
-            //    // Try to fetch current intent to determine if it's safe to update
-            //    PaymentIntent? current = null;
-            //    try
-            //    {
-            //        current = await service.GetAsync(cart.PaymentIntentId);
-            //    }
-            //    catch (StripeException)
-            //    {
-            //        // If we can't fetch (e.g., not found), we'll create a new intent below
-            //        current = null;
-            //    }
-
-            //    // If we couldn't fetch or the current intent is in a non-updatable status, create a new intent
-            //    if (current == null || !updatableStatuses.Contains(current.Status ?? string.Empty))
-            //    {
-            //        var createOptions = new PaymentIntentCreateOptions
-            //        {
-            //            Amount = amount,
-            //            Currency = "usd",
-            //            PaymentMethodTypes = new List<string> { "card" }
-            //        };
-            //        intent = await service.CreateAsync(createOptions);
-            //        cart.PaymentIntentId = intent.Id;
-            //        cart.ClientSecret = intent.ClientSecret;
-            //    }
-            //    else
-            //    {
-            //        // Safe to update
-            //        var updateOptions = new PaymentIntentUpdateOptions
-            //        {
-            //            Amount = amount
-            //        };
-
-            //        try
-            //        {
-            //            intent = await service.UpdateAsync(cart.PaymentIntentId, updateOptions);
-            //        }
-            //        catch (StripeException ex)
-            //        {
-            //            // Fallback: if Stripe says it cannot be updated (race or status changed),
-            //            // create a new PaymentIntent so the client can continue
-            //            // (this prevents the exception from bubbling and leaves cart in usable state)
-            //            if (ex.Message?.Contains("could not be updated", StringComparison.OrdinalIgnoreCase) == true
-            //                || ex.StripeError?.Code == "payment_intent_unexpected_state")
-            //            {
-            //                var createOptions = new PaymentIntentCreateOptions
-            //                {
-            //                    Amount = amount,
-            //                    Currency = "usd",
-            //                    PaymentMethodTypes = new List<string> { "card" }
-            //                };
-            //                intent = await service.CreateAsync(createOptions);
-            //                cart.PaymentIntentId = intent.Id;
-            //                cart.ClientSecret = intent.ClientSecret;
-            //            }
-            //            else
-            //            {
-            //                throw;
-            //            }
-            //        }
-            //    }
-            //}
 
             await cartService.SetCartAsync(cart);
             return cart;

@@ -95,6 +95,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return of(null);
       }
 
+      if (err.status === 403) {
+        snackbar.error('Forbidden');
+      }
+
       if (err.status === 400 || err.status === 401) {
         if (err.error?.errors) {
           const modelStateErrors = [];
