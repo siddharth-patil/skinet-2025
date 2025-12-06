@@ -14,25 +14,25 @@ export class AccountService {
   private signalrService = inject(SignalrService);
   currentUser = signal<User | null>(null);
 
-  // login(values:any){
-  //   let params = new HttpParams();
-  //   params = params.append('useCookies', true);
-  //   return this.http.post<User>(this.baseUrl + 'login', values, {params}).pipe(
-  //     tap(()=>this.signalrService.createHubConnection())
-  //   );
-  // }
-
   login(values:any){
-  let params = new HttpParams().append('useCookies', true);
-
-  return this.http.post<User>(this.baseUrl + 'login', values, {params}).pipe(
-    tap((user: User) => {
-      this.currentUser.set(user);   // 🔥 immediately update UI
-
-      this.signalrService.createHubConnection();
-    })
-  );
+    let params = new HttpParams();
+    params = params.append('useCookies', true);
+    return this.http.post<User>(this.baseUrl + 'login', values, {params}).pipe(
+      tap(()=>this.signalrService.createHubConnection())
+    );
   }
+
+  // login(values:any){
+  // let params = new HttpParams().append('useCookies', true);
+
+  // return this.http.post<User>(this.baseUrl + 'login', values, {params}).pipe(
+  //   tap((user: User) => {
+  //     this.currentUser.set(user);   // 🔥 immediately update UI
+
+  //     this.signalrService.createHubConnection();
+  //   })
+  // );
+  // }
 
 
   register(values: any){
@@ -48,25 +48,25 @@ export class AccountService {
       map(user => {
         this.currentUser.set(user);
         return user;
-      }),
-      catchError(() => of(null))
+      })//,
+      // catchError(() => of(null))
+    );
+  }
+
+  logout(){
+    return this.http.post(this.baseUrl + 'account/logout', {}).pipe(
+      tap(()=>this.signalrService.stopHubConnection())
     );
   }
 
   // logout(){
-  //   return this.http.post(this.baseUrl + 'account/logout', {}).pipe(
-  //     tap(()=>this.signalrService.stopHubConnection())
-  //   );
+  // return this.http.post(this.baseUrl + 'account/logout', {}).pipe(
+  //   tap(() => {
+  //     this.currentUser.set(null);    // Clear UI instantly
+  //     this.signalrService.stopHubConnection();
+  //   })
+  // );
   // }
-
-  logout(){
-  return this.http.post(this.baseUrl + 'account/logout', {}).pipe(
-    tap(() => {
-      this.currentUser.set(null);    // Clear UI instantly
-      this.signalrService.stopHubConnection();
-    })
-  );
-}
 
 
   updateAddress(address: Address){
