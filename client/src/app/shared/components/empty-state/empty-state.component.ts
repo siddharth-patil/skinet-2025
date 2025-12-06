@@ -9,7 +9,8 @@ import { emit } from 'process';
   imports: [
     MatIcon,
     MatButton,
-  ],
+    RouterLink
+],
   templateUrl: './empty-state.component.html',
   styleUrl: './empty-state.component.scss'
 })

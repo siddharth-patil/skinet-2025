@@ -1,4 +1,4 @@
-import { catchError, map, of, tap } from 'rxjs';
+import { catchError, map, of, tap, throwError } from 'rxjs';
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -22,35 +22,34 @@ export class AccountService {
     );
   }
 
-  // login(values:any){
-  // let params = new HttpParams().append('useCookies', true);
-
-  // return this.http.post<User>(this.baseUrl + 'login', values, {params}).pipe(
-  //   tap((user: User) => {
-  //     this.currentUser.set(user);   // 🔥 immediately update UI
-
-  //     this.signalrService.createHubConnection();
-  //   })
-  // );
-  // }
-
 
   register(values: any){
     return this.http.post(this.baseUrl + 'account/register', values);
   }
 
-  getUserInfo(){
-    // return this.http.get<User>(this.baseUrl + 'account/user-info', {withCredentials:true}).subscribe({
-    //   next: user => this.currentUser.set(user)
-    // })
+  // getUserInfo(){
 
-    return this.http.get<User>(this.baseUrl + 'account/user-info').pipe(
-      map(user => {
-        this.currentUser.set(user);
-        return user;
-      })//,
-      // catchError(() => of(null))
-    );
+  //   return this.http.get<User>(this.baseUrl + 'account/user-info').pipe(
+  //     map(user => {
+  //       this.currentUser.set(user);
+  //       return user;
+  //     })//,
+  //     // catchError(() => of(null))
+  //   );
+  // }
+  getUserInfo() {
+  return this.http.get<User>(this.baseUrl + 'account/user-info').pipe(
+    tap(user => this.currentUser.set(user)),
+    catchError(err => {
+      // 401 = not logged in → just return null instead of breaking the app
+      if (err.status === 401) {
+        this.currentUser.set(null);
+        return of(null);
+      }
+      // other errors should still bubble up if you want
+      return throwError(() => err);
+    })
+  );
   }
 
   logout(){
@@ -58,15 +57,6 @@ export class AccountService {
       tap(()=>this.signalrService.stopHubConnection())
     );
   }
-
-  // logout(){
-  // return this.http.post(this.baseUrl + 'account/logout', {}).pipe(
-  //   tap(() => {
-  //     this.currentUser.set(null);    // Clear UI instantly
-  //     this.signalrService.stopHubConnection();
-  //   })
-  // );
-  // }
 
 
   updateAddress(address: Address){

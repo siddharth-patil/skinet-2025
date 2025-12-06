@@ -15,10 +15,10 @@ import { ActivatedRoute, Router } from '@angular/router';
     MatFormField,
     MatInput,
     MatLabel,
-    MatButton
+    MatButton,
   ],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);
@@ -27,7 +27,7 @@ export class LoginComponent {
   private activatedRoute = inject(ActivatedRoute);
   returnUrl = '/shop';
 
-  constructor(){
+  constructor() {
     const url = this.activatedRoute.snapshot.queryParams['returnUrl'];
     if (url) {
       this.returnUrl = url;
@@ -35,18 +35,31 @@ export class LoginComponent {
   }
 
   loginForm = this.fb.group({
-    email:[''],
-    password:['']
+    email: [''],
+    password: [''],
   });
 
-  onSubmit(){
+  // onSubmit(){
+  //   this.accountService.login(this.loginForm.value).subscribe({
+  //     next:()=>{
+  //       // this.accountService.getUserInfo().subscribe();
+  //       this.accountService.getUserInfo();
+  //       // this.router.navigateByUrl('/shop');
+  //       this.router.navigateByUrl(this.returnUrl);
+  //     }
+  //   })
+  // }
+  onSubmit() {
     this.accountService.login(this.loginForm.value).subscribe({
-      next:()=>{
-        // this.accountService.getUserInfo().subscribe();
-        this.accountService.getUserInfo();
-        // this.router.navigateByUrl('/shop');
-        this.router.navigateByUrl(this.returnUrl);
-      }
-    })
+      next: () => {
+        this.accountService.getUserInfo().subscribe(() => {
+          this.router.navigateByUrl(this.returnUrl);
+        });
+      },
+      error: (err) => {
+        // handle login errors here (optional)
+        console.error(err);
+      },
+    });
   }
 }
